@@ -3,10 +3,425 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kite Housing</title>
+  <title>Housing in Korea — KITE, Korea University</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Kite Housing</h1>
-  <p>GitHub Pages deployment test — coming soon.</p>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <a class="nav-logo" href="#hero">KITE<span>·</span>Korea University</a>
+      <button class="nav-toggle" aria-label="Toggle menu">&#9776;</button>
+      <ul class="nav-links">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#rental">Rental Systems</a></li>
+        <li><a href="#deposit">Deposit</a></li>
+        <li><a href="#banjiha">Banjiha</a></li>
+        <li><a href="#maintenance">Maintenance</a></li>
+        <li><a href="#registration">Registration</a></li>
+        <li><a href="#etiquette">Etiquette</a></li>
+        <li><a href="#map" class="nav-cta">Commute Map</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-inner">
+      <span class="badge">KITE · Korea University</span>
+      <h1>Housing in Korea</h1>
+      <p class="hero-sub">A practical guide for international students at Korea University</p>
+      <a href="#overview" class="btn-primary">Get Started</a>
+    </div>
+  </section>
+
+  <!-- OVERVIEW -->
+  <section id="overview" class="section">
+    <div class="container">
+      <h2>Before You Sign Anything</h2>
+      <p class="section-sub">why this guide exists</p>
+      <p class="section-intro">Finding housing in Korea is exciting — but also confusing. Through interviews with international students at Korea University, three pain points kept coming up.</p>
+      <div class="cards-3">
+        <div class="card pain-card">
+          <div class="pain-icon">📋</div>
+          <h3>Unfamiliar Contract Systems</h3>
+          <p>Korea has rental structures unlike anything in most countries. <em>Jeonse</em>, <em>Wolse</em>, <em>Ban-jeonse</em> — most students had never heard these terms before arriving.</p>
+        </div>
+        <div class="card pain-card">
+          <div class="pain-icon">🗣️</div>
+          <h3>Language Barriers</h3>
+          <p>Contracts, maintenance requests, residence reports — all in Korean. One wrong misunderstanding can cost you your deposit.</p>
+        </div>
+        <div class="card pain-card">
+          <div class="pain-icon">🏠</div>
+          <h3>Cultural Surprises</h3>
+          <p>Semi-basement apartments, strict noise etiquette, complex garbage sorting — Korean apartment life has its own rules, and no one explains them upfront.</p>
+        </div>
+      </div>
+      <div class="chapter-nav">
+        <a href="#rental" class="chapter-pill">① Rental Systems</a>
+        <a href="#deposit" class="chapter-pill">② Deposit Protection</a>
+        <a href="#banjiha" class="chapter-pill">③ Banjiha</a>
+        <a href="#maintenance" class="chapter-pill">④ Maintenance</a>
+        <a href="#registration" class="chapter-pill">⑤ Registration</a>
+        <a href="#etiquette" class="chapter-pill">⑥ Etiquette</a>
+        <a href="#map" class="chapter-pill highlight">★ Commute Map</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- RENTAL SYSTEMS -->
+  <section id="rental" class="section section-alt">
+    <div class="container">
+      <h2>Rental Systems</h2>
+      <p class="section-sub">chapter 1 · how renting works in korea</p>
+      <p class="section-intro">Korea has three rental structures. The key insight: <strong>a deposit is not a fee — it is money temporarily held and returned to you at the end of the lease.</strong></p>
+
+      <div class="cards-3">
+        <div class="card rental-card">
+          <div class="rental-tag">전세</div>
+          <h3>Jeonse</h3>
+          <div class="rental-detail"><span class="label">Deposit</span><span class="value high">Very Large<br><small>often ₩100M+</small></span></div>
+          <div class="rental-detail"><span class="label">Monthly Rent</span><span class="value good">None</span></div>
+          <div class="rental-detail"><span class="label">Best For</span><span class="value">Long-term residents with large savings</span></div>
+          <div class="rental-detail"><span class="label">Risk</span><span class="value risk-high">High — deposit return risk</span></div>
+        </div>
+        <div class="card rental-card popular">
+          <div class="popular-badge">Most Common for Students</div>
+          <div class="rental-tag">월세</div>
+          <h3>Wolse</h3>
+          <div class="rental-detail"><span class="label">Deposit</span><span class="value mid">Smaller<br><small>~₩5M–₩30M</small></span></div>
+          <div class="rental-detail"><span class="label">Monthly Rent</span><span class="value mid">Yes — paid monthly</span></div>
+          <div class="rental-detail"><span class="label">Best For</span><span class="value">Students and short-term residents</span></div>
+          <div class="rental-detail"><span class="label">Risk</span><span class="value risk-low">Lower upfront risk</span></div>
+        </div>
+        <div class="card rental-card">
+          <div class="rental-tag">반전세</div>
+          <h3>Ban-jeonse</h3>
+          <div class="rental-detail"><span class="label">Deposit</span><span class="value mid">Medium-large<br><small>~₩30M–₩100M</small></span></div>
+          <div class="rental-detail"><span class="label">Monthly Rent</span><span class="value mid">Yes — but smaller</span></div>
+          <div class="rental-detail"><span class="label">Best For</span><span class="value">Residents with moderate savings</span></div>
+          <div class="rental-detail"><span class="label">Risk</span><span class="value risk-mid">Medium</span></div>
+        </div>
+      </div>
+
+      <div class="expandable">
+        <button class="expand-btn" aria-expanded="false">How does Jeonse actually work? ▾</button>
+        <div class="expand-body">
+          <p>You hand the landlord a very large sum — often the price of a small apartment — and live there for one or two years paying <em>nothing</em> per month. At the end, the landlord returns that deposit in full.</p>
+          <p>Why does the landlord agree? While you're living there, they have free use of your money — to invest, repay loans, or do whatever. So Jeonse isn't free housing; you're lending the landlord a small fortune in exchange for somewhere to live.</p>
+          <p><strong>The risk:</strong> if the landlord can't pay you back at the end, you're in serious trouble. Before signing any Jeonse contract, check the property register, verify existing mortgages, and confirm the landlord's identity.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-heading">Quick Comparison</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th></th><th>Jeonse (전세)</th><th>Wolse (월세)</th><th>Ban-jeonse (반전세)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Upfront deposit</td><td>Very large</td><td>Small–Medium</td><td>Medium–Large</td></tr>
+            <tr><td>Monthly payment</td><td>None</td><td>Yes</td><td>Reduced</td></tr>
+            <tr><td>Deposit return risk</td><td>High</td><td>Low</td><td>Medium</td></tr>
+            <tr><td>Good for students?</td><td>Rarely</td><td>✓ Yes</td><td>Sometimes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEPOSIT PROTECTION -->
+  <section id="deposit" class="section">
+    <div class="container">
+      <h2>Deposit Protection</h2>
+      <p class="section-sub">chapter 2 · how to protect your money</p>
+      <p class="section-intro">Your deposit can be protected by law — but only if you follow these four steps after moving in.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Move In</h3>
+            <p>Actually take physical possession of the property.</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Report Your Address</h3>
+            <p>File a <em>jeonip-singo</em> (전입신고). For foreigners, your Alien Registration Card address report carries the same legal weight.</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Get a Fixed Date</h3>
+            <p><em>Hwakjeong-ilja</em> (확정일자) — a court-stamped date that gives you priority repayment if the property is ever auctioned.</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Report the Lease</h3>
+            <p>Required within 30 days if deposit exceeds ₩60M or monthly rent exceeds ₩300,000.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub-heading">Checklist — Save Your Spot</h3>
+      <p class="section-intro">Check off each item as you go. Your progress is saved in your browser.</p>
+      <div class="checklist-wrap">
+        <div class="checklist-group">
+          <h4>Before Signing</h4>
+          <label class="check-item"><input type="checkbox" data-key="c1"> Check the property register (등기부등본) for existing mortgages</label>
+          <label class="check-item"><input type="checkbox" data-key="c2"> Verify the landlord's identity matches the register</label>
+          <label class="check-item"><input type="checkbox" data-key="c3"> Confirm the agent's license number</label>
+          <label class="check-item"><input type="checkbox" data-key="c4"> Check for any outstanding liens or lawsuits on the property</label>
+          <label class="check-item"><input type="checkbox" data-key="c5"> Photograph every room — walls, floor, ceiling, fixtures</label>
+        </div>
+        <div class="checklist-group">
+          <h4>After Signing / Moving In</h4>
+          <label class="check-item"><input type="checkbox" data-key="c6"> Move in and take physical possession</label>
+          <label class="check-item"><input type="checkbox" data-key="c7"> File address report (전입신고 / Alien Registration update)</label>
+          <label class="check-item"><input type="checkbox" data-key="c8"> Get 확정일자 (at the local community office or online)</label>
+          <label class="check-item"><input type="checkbox" data-key="c9"> Report the lease within 30 days if above the thresholds</label>
+        </div>
+        <div class="checklist-group">
+          <h4>During the Lease</h4>
+          <label class="check-item"><input type="checkbox" data-key="c10"> Keep copies of all contracts and receipts</label>
+          <label class="check-item"><input type="checkbox" data-key="c11"> Document any maintenance issues in writing</label>
+          <label class="check-item"><input type="checkbox" data-key="c12"> Confirm lease renewal or termination 2–6 months before end date</label>
+        </div>
+        <div class="checklist-group">
+          <h4>Before Moving Out</h4>
+          <label class="check-item"><input type="checkbox" data-key="c13"> Notify landlord of move-out date in writing</label>
+          <label class="check-item"><input type="checkbox" data-key="c14"> Do a joint walk-through and agree on condition report</label>
+          <label class="check-item"><input type="checkbox" data-key="c15"> Confirm deposit return date and bank account</label>
+          <label class="check-item"><input type="checkbox" data-key="c16"> Update address at immigration office within 15 days of move</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BANJIHA -->
+  <section id="banjiha" class="section section-alt">
+    <div class="container">
+      <h2>Banjiha — Semi-Basement Apartments</h2>
+      <p class="section-sub">chapter 3 · a uniquely korean housing type</p>
+      <p class="section-intro"><em>반지하 (Banjiha)</em> apartments sit partly below ground level. They're found all over Seoul — even in desirable neighborhoods — and can be a cost-effective option if you know what to check.</p>
+
+      <div class="two-col">
+        <div class="card">
+          <h3>Advantages</h3>
+          <ul class="pro-con-list pros">
+            <li>Lower rent than equivalent above-ground units</li>
+            <li>Often in well-located, central neighborhoods</li>
+            <li>Cooler in summer (partially insulated by earth)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Disadvantages</h3>
+          <ul class="pro-con-list cons">
+            <li>High humidity — mold is a common issue</li>
+            <li>Poor natural light and ventilation</li>
+            <li>Windows at or below street level — limited privacy</li>
+            <li>Flooding risk during heavy rainfall</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout callout-warning">
+        <strong>Photos lie. Listings lie.</strong><br>
+        A walk-through doesn't. Always visit in person before signing — check the walls for mold stains, run the bathroom fan, smell for damp. Visit after rain if you can.
+      </div>
+    </div>
+  </section>
+
+  <!-- MAINTENANCE -->
+  <section id="maintenance" class="section">
+    <div class="container">
+      <h2>Maintenance & Repairs</h2>
+      <p class="section-sub">chapter 4 · when something breaks</p>
+      <p class="section-intro">Something will break. Here's who to call — and the one Korean phrase that will solve most problems.</p>
+
+      <div class="decision-tree">
+        <div class="dt-node dt-start">
+          <strong>Something broke</strong>
+        </div>
+        <div class="dt-arrow">↓</div>
+        <div class="dt-row">
+          <div class="dt-node">
+            <span class="dt-label">Normal issue<br><small>(boiler, leak, appliance)</small></span>
+            <div class="dt-arrow-down">↓</div>
+            <div class="dt-node dt-action">Call your <strong>Landlord</strong><br><small>or Real Estate Agent if managed</small></div>
+          </div>
+          <div class="dt-node">
+            <span class="dt-label">Common area issue<br><small>(hallway, elevator, parking)</small></span>
+            <div class="dt-arrow-down">↓</div>
+            <div class="dt-node dt-action">Call the <strong>Building Manager</strong><br><small>(관리사무소)</small></div>
+          </div>
+          <div class="dt-node">
+            <span class="dt-label">Emergency<br><small>(gas leak, fire, major flood)</small></span>
+            <div class="dt-arrow-down">↓</div>
+            <div class="dt-node dt-action dt-emergency">Call <strong>119</strong><br><small>Fire & Emergency Services</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phrase-box">
+        <div class="phrase-kr">고장났어요</div>
+        <div class="phrase-rom">Gojang nasseoyo</div>
+        <div class="phrase-en">"It's broken."</div>
+        <p>Say this over the phone and your landlord will know exactly why you're calling. Useful far beyond apartments.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGISTRATION -->
+  <section id="registration" class="section section-alt">
+    <div class="container">
+      <h2>Change of Residence Report</h2>
+      <p class="section-sub">chapter 5 · a legal obligation, not a suggestion</p>
+
+      <div class="callout callout-urgent">
+        <strong>When you move, you have 15 days to report your new address.</strong> Miss the deadline and you can be fined.
+      </div>
+
+      <div class="two-col">
+        <div class="card path-card">
+          <div class="path-icon">💻</div>
+          <h3>Online — HiKorea</h3>
+          <p>Available 24/7. Go to <strong>hikorea.go.kr</strong> → Civil Service → Change of Address Report.</p>
+          <p>Fastest option. No travel required.</p>
+        </div>
+        <div class="card path-card">
+          <div class="path-icon">🏢</div>
+          <h3>In Person — Immigration Office</h3>
+          <p>Visit your nearest Immigration Office during business hours.</p>
+          <p>Bring: <strong>Passport</strong>, <strong>Alien Registration Card</strong>, and <strong>Form 34</strong> (Change-of-Residence form).</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <h4>No service charge</h4>
+        <p>Both methods are free. Just do it within the first week of moving — don't let it slip past the 15-day window.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ETIQUETTE -->
+  <section id="etiquette" class="section">
+    <div class="container">
+      <h2>Apartment Etiquette</h2>
+      <p class="section-sub">chapter 6 · being a good neighbor</p>
+      <p class="section-intro">Korean apartment buildings are stacked tight. Walls are thinner than you think, and you'll see the same faces in the elevator for years. Good apartment living is mostly mutual respect.</p>
+
+      <div class="cards-2">
+        <div class="card etiquette-card">
+          <div class="etiquette-icon">🔇</div>
+          <h3>Noise</h3>
+          <ul>
+            <li>Lower volume after 10 PM</li>
+            <li>Run washing machine and vacuum during the day — not at night</li>
+            <li>Stick felt pads on chair and table legs</li>
+            <li>Wear slippers indoors — heel strikes on concrete travel straight down</li>
+          </ul>
+        </div>
+        <div class="card etiquette-card">
+          <div class="etiquette-icon">🗑️</div>
+          <h3>Garbage Sorting</h3>
+          <p>Korea has six categories with separate bags and fees. Food waste is the tricky one:</p>
+          <table class="food-table">
+            <thead><tr><th>Item</th><th>Food Waste?</th></tr></thead>
+            <tbody>
+              <tr><td>Banana peel</td><td class="yes">✓ Yes</td></tr>
+              <tr><td>Corn husk / silk</td><td class="no">✗ No</td></tr>
+              <tr><td>Apple core</td><td class="yes">✓ Yes</td></tr>
+              <tr><td>Peach / avocado pit</td><td class="no">✗ No</td></tr>
+              <tr><td>Eggshell</td><td class="no">✗ No</td></tr>
+              <tr><td>Tea bag</td><td class="no">✗ No</td></tr>
+              <tr><td>Onion skin</td><td class="no">✗ No</td></tr>
+            </tbody>
+          </table>
+          <p><small>When in doubt, ask the building manager.</small></p>
+        </div>
+        <div class="card etiquette-card">
+          <div class="etiquette-icon">🚗</div>
+          <h3>Parking</h3>
+          <ul>
+            <li>Spots are often unassigned — double-parking is normal</li>
+            <li>If you double-park: leave gear in neutral, parking brake <strong>off</strong> — so neighbors can push your car</li>
+            <li>Keep your phone reachable when double-parked</li>
+          </ul>
+        </div>
+        <div class="card etiquette-card">
+          <div class="etiquette-icon">🤝</div>
+          <h3>General</h3>
+          <ul>
+            <li>Keep shared spaces clean — corridors, lobby, laundry room</li>
+            <li>Clean up after your pet</li>
+            <li>Smoke only in permitted areas — never on the veranda</li>
+            <li>Greet your neighbors</li>
+          </ul>
+          <div class="greeting-box">
+            <span class="greeting-kr">안녕하세요</span>
+            <span class="greeting-rom">Annyeonghaseyo</span>
+            <span class="greeting-en">That one word does more for apartment life than anything else on this list.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUTE MAP -->
+  <section id="map" class="section section-alt">
+    <div class="container">
+      <h2>Commute Map</h2>
+      <p class="section-sub">find housing by walking distance to your building</p>
+      <p class="section-intro">Select your college or department below. The map will show which areas around Korea University are reachable within <span class="zone-legend green-text">10</span>, <span class="zone-legend amber-text">20</span>, and <span class="zone-legend orange-text">30</span> minutes on foot — and how much rent typically costs in each neighborhood.</p>
+
+      <div class="map-controls">
+        <label for="building-select">Select your college / building:</label>
+        <select id="building-select">
+          <option value="">— Choose a college —</option>
+          <option value="engineering">College of Engineering (공과대학)</option>
+          <option value="humanities">College of Liberal Arts (인문대학)</option>
+          <option value="business">Business School (경영대학)</option>
+          <option value="law">School of Law (법학전문대학원)</option>
+          <option value="education">College of Education (사범대학)</option>
+          <option value="medicine">College of Medicine (의과대학)</option>
+        </select>
+        <div class="map-legend">
+          <span class="legend-dot" style="background:#2E7D32"></span> ≤ 10 min
+          <span class="legend-dot" style="background:#F9A825"></span> ≤ 20 min
+          <span class="legend-dot" style="background:#E64A19"></span> ≤ 30 min
+          <span class="legend-dot" style="background:#8B1A2B; opacity:0.4"></span> Rent overlay
+        </div>
+      </div>
+
+      <div id="map-container"></div>
+      <p class="map-note">Walking time isochrones computed via OpenRouteService (pedestrian mode). Rent figures are approximate 2024 averages for studio / 1-room units. Click a neighborhood for details.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <p>Made by <strong>KITE</strong> — Korean-English Translation &amp; Interpretation Club, Korea University</p>
+      <p class="footer-sub">This guide is for informational purposes only. Always consult a licensed real estate agent for legal matters.</p>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

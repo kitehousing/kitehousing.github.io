@@ -1,0 +1,145 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name_en": "Anam-dong",
+        "name_kr": "안암동",
+        "deposit": "₩500–1,000만",
+        "monthly": "₩45–65만/month",
+        "monthly_mid": 55,
+        "notes": "Most popular with KU students. Dense with 원룸 and 투룸. Many cafes and convenience stores."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [127.0268, 37.5862], [127.0330, 37.5862],
+          [127.0342, 37.5890], [127.0330, 37.5918],
+          [127.0280, 37.5920], [127.0258, 37.5898],
+          [127.0268, 37.5862]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name_en": "Jongam-dong",
+        "name_kr": "종암동",
+        "deposit": "₩400–800만",
+        "monthly": "₩40–55만/month",
+        "monthly_mid": 47,
+        "notes": "Quieter residential area. Near 고려대역 (Line 6). Slightly more affordable than Anam."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [127.0195, 37.5875], [127.0268, 37.5862],
+          [127.0258, 37.5898], [127.0240, 37.5925],
+          [127.0195, 37.5920], [127.0178, 37.5895],
+          [127.0195, 37.5875]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name_en": "Jeongneung-dong",
+        "name_kr": "정릉동",
+        "deposit": "₩300–700만",
+        "monthly": "₩35–50만/month",
+        "monthly_mid": 42,
+        "notes": "More residential and quieter. Further from campus. Good for those who prefer a calmer neighborhood."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [127.0095, 37.5905], [127.0178, 37.5895],
+          [127.0195, 37.5920], [127.0180, 37.5960],
+          [127.0095, 37.5955], [127.0075, 37.5925],
+          [127.0095, 37.5905]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name_en": "Wolgok-dong",
+        "name_kr": "월곡동",
+        "deposit": "₩400–900만",
+        "monthly": "₩42–60만/month",
+        "monthly_mid": 51,
+        "notes": "Near 월곡역 (Line 6). Good access to northern Seoul. Mix of older apartments and newer builds."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [127.0230, 37.5940], [127.0310, 37.5940],
+          [127.0330, 37.5970], [127.0300, 37.5995],
+          [127.0225, 37.5995], [127.0200, 37.5965],
+          [127.0230, 37.5940]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name_en": "Jegi-dong",
+        "name_kr": "제기동",
+        "deposit": "₩500–1,000만",
+        "monthly": "₩45–62만/month",
+        "monthly_mid": 53,
+        "notes": "South of KU, near 제기동역 (Line 1). Convenient for city-wide transit. Lively market area."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [127.0268, 37.5800], [127.0355, 37.5800],
+          [127.0360, 37.5835], [127.0330, 37.5862],
+          [127.0268, 37.5862], [127.0255, 37.5835],
+          [127.0268, 37.5800]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name_en": "Gireum-dong",
+        "name_kr": "길음동",
+        "deposit": "₩500–1,200만",
+        "monthly": "₩50–70만/month",
+        "monthly_mid": 60,
+        "notes": "Near 길음역 (Line 4). Large-scale apartment complexes. Good amenities and transit connections."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [127.0095, 37.5955], [127.0180, 37.5960],
+          [127.0195, 37.5990], [127.0160, 37.6020],
+          [127.0095, 37.6020], [127.0070, 37.5985],
+          [127.0095, 37.5955]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name_en": "Sungbuk-dong",
+        "name_kr": "성북동",
+        "deposit": "₩600–1,500만",
+        "monthly": "₩55–80만/month",
+        "monthly_mid": 67,
+        "notes": "Upscale hillside area north of campus. Quieter and more scenic, but farther from the main gates."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [127.0000, 37.5920], [127.0095, 37.5905],
+          [127.0075, 37.5925], [127.0060, 37.5960],
+          [127.0000, 37.5965], [126.9980, 37.5940],
+          [127.0000, 37.5920]
+        ]]
+      }
+    }
+  ]
+}
