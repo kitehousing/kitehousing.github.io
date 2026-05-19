@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -387,7 +386,7 @@
     <div class="container">
       <h2>Commute Map</h2>
       <p class="section-sub">find housing by walking distance to your building</p>
-      <p class="section-intro">Select your college or department below. The map will show which areas around Korea University are reachable within <span class="zone-legend green-text">10</span>, <span class="zone-legend amber-text">20</span>, and <span class="zone-legend orange-text">30</span> minutes on foot — and how much rent typically costs in each neighborhood.</p>
+      <p class="section-intro">Select your college or department below. The map will show which areas around Korea University fall within each commute time band — and how much rent typically costs in each neighborhood.</p>
 
       <div class="map-controls">
         <label for="building-select">Select your college / building:</label>
@@ -401,15 +400,17 @@
           <option value="medicine">College of Medicine (의과대학)</option>
         </select>
         <div class="map-legend">
-          <span class="legend-dot" style="background:#2E7D32"></span> ≤ 10 min
-          <span class="legend-dot" style="background:#F9A825"></span> ≤ 20 min
-          <span class="legend-dot" style="background:#E64A19"></span> ≤ 30 min
+          <span class="legend-dot" style="background:#1B5E20"></span> ≤ 20 min
+          <span class="legend-dot" style="background:#66BB6A"></span> 20–40 min
+          <span class="legend-dot" style="background:#FDD835"></span> 40–60 min
+          <span class="legend-dot" style="background:#EF6C00"></span> 60–80 min
+          <span class="legend-dot" style="background:#B71C1C"></span> 80+ min
           <span class="legend-dot" style="background:#8B1A2B; opacity:0.4"></span> Rent overlay
         </div>
       </div>
 
       <div id="map-container"></div>
-      <p class="map-note">Walking time isochrones computed via OpenRouteService (pedestrian mode). Rent figures are approximate 2024 averages for studio / 1-room units. Click a neighborhood for details.</p>
+      <p class="map-note">Commute zones are approximate estimates. Accurate transit-time polygons will be updated. Rent figures are approximate 2024 averages for studio / 1-room units. Click a neighborhood for details.</p>
     </div>
   </section>
 
@@ -421,7 +422,7 @@
     </div>
   </footer>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=5e5ce1441d5e28a4b02bdecd9c79917a&autoload=false"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
