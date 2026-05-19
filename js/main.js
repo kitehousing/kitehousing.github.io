@@ -28,7 +28,10 @@ document.querySelectorAll('.check-item input[type=checkbox]').forEach(cb => {
 });
 
 /* ── Kakao Map ── */
-kakao.maps.load(() => {
+if (typeof kakao === 'undefined') {
+  document.getElementById('map-container').innerHTML =
+    '<p style="padding:2rem;color:#c62828;">Kakao Maps failed to load. Check your network connection and that this domain is registered in Kakao Developers.</p>';
+} else {
   const KU_CENTER = new kakao.maps.LatLng(37.5895, 127.0317);
 
   const map = new kakao.maps.Map(document.getElementById('map-container'), {
@@ -224,4 +227,4 @@ kakao.maps.load(() => {
   document.getElementById('building-select').addEventListener('change', e => {
     loadIsochrone(e.target.value);
   });
-});
+}
