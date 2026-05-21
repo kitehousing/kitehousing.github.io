@@ -386,7 +386,7 @@
     <div class="container">
       <h2>Commute Map</h2>
       <p class="section-sub">find housing by walking distance to your building</p>
-      <p class="section-intro">Select your college or department below. The map will show which areas around Korea University fall within each commute time band — and how much rent typically costs in each neighborhood.</p>
+      <p class="section-intro">Select your college below. The map shades the area around Korea University by total commute time — assuming you take the subway from <strong>Anam Station (안암역)</strong> and walk ~10 min to your building. The innermost green zone is a 20-min walking radius around your specific college.</p>
 
       <div class="map-controls">
         <label for="building-select">Select your college / building:</label>
@@ -422,7 +422,8 @@
     </div>
   </footer>
 
-  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5e5ce1441d5e28a4b02bdecd9c79917a"></script>
+  <script type="text/javascript"
+          src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=YOUR_NAVER_CLIENT_ID"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
