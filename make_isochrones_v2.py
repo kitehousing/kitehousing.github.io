@@ -1,94 +1,58 @@
 """
-Convert anam_rays.json (from fetch_anam_isochrones.py) into:
-  data/isochrones/transit_anam.geojson    ← 4 features (shared across all buildings):
-                                              [0] huge "80+ min" background polygon
-                                              [1] 70-min contour from 안암역 (= 80 total)
-                                              [2] 50-min contour                (= 60 total)
-                                              [3] 30-min contour                (= 40 total)
+Convert anam_rays.json (from fetch_anam_isochrones.py) → transit_anam.geojson.
 
-The walking circles for the ≤20 min zone are drawn by the JS directly (no GeoJSON).
+Output schema: each feature has properties.total_commute_min so the JS can
+render contours by total commute time (transit time from 안암역 + 10 min walk).
 
-If no ray data exists, this script falls back to APPROXIMATE circular contours so
-the map shows something while you're collecting real data.
+  30-min transit from 안암역  →  40-min total commute
+  50-min transit              →  60-min total commute
+  70-min transit              →  80-min total commute
+
+If no ray data exists, falls back to approximate circular contours so the map
+shows something while you're collecting real data.
 
 Usage:
-    python make_isochrones_v2.py             # writes transit_anam.geojson
+    python make_isochrones_v2.py
 """
 import json, math, os
 
 ANAM = {"lat": 37.5862, "lon": 127.0301}
 
-# Contour distance (km) FALLBACKS — used only when no real ray data is available.
-# Rough estimate: transit at ~25 km/h average → 10/30/50/70 min = ~4 / 12 / 20 / 28 km.
-# We cap at the map's display zoom to keep polygons reasonable.
-FALLBACK_RADII_KM = {10: 3.0, 30: 8.0, 50: 13.0, 70: 18.0}
+# Mapping: transit-time-from-안암역 → total commute time (transit + 10 walk)
+LEVEL_TO_TOTAL = {30: 40, 50: 60, 70: 80}
 
-# GeoJSON feature order: largest → smallest
-#   [0] background polygon (everything in view), label "80+"
-#   [1] 70-min contour      (everything ≤ 70 min)   label "60-80"
-#   [2] 50-min contour                              label "40-60"
-#   [3] 30-min contour                              label "20-40"
-FEATURE_ORDER = [
-    {"key": "background", "label": "80+"},
-    {"key": "70",         "label": "60-80"},
-    {"key": "50",         "label": "40-60"},
-    {"key": "30",         "label": "20-40"},
-]
+# Fallback radii (km) when no ray data — rough transit-speed estimate.
+FALLBACK_RADII_KM = {30: 7.0, 50: 13.0, 70: 19.0}
 
 M_PER_DEG_LAT = 111320.0
 M_PER_DEG_LON = 111320.0 * math.cos(math.radians(ANAM["lat"]))
 
 
-def offset(lat, lon, angle_rad, dist_km):
+def offset(angle_rad, dist_km):
+    """Return (lon, lat) in GeoJSON order."""
     dx = dist_km * 1000 * math.cos(angle_rad)
     dy = dist_km * 1000 * math.sin(angle_rad)
-    return (lon + dx / M_PER_DEG_LON,
-            lat + dy / M_PER_DEG_LAT)
+    return (ANAM["lon"] + dx / M_PER_DEG_LON,
+            ANAM["lat"] + dy / M_PER_DEG_LAT)
 
 
-def make_background_ring(half_km=25):
-    """Return a big box around 안암역 in [lon, lat] GeoJSON order."""
-    dlat = (half_km * 1000) / M_PER_DEG_LAT
-    dlon = (half_km * 1000) / M_PER_DEG_LON
-    lat0, lon0 = ANAM["lat"], ANAM["lon"]
-    return [
-        [round(lon0 - dlon, 6), round(lat0 - dlat, 6)],
-        [round(lon0 + dlon, 6), round(lat0 - dlat, 6)],
-        [round(lon0 + dlon, 6), round(lat0 + dlat, 6)],
-        [round(lon0 - dlon, 6), round(lat0 + dlat, 6)],
-        [round(lon0 - dlon, 6), round(lat0 - dlat, 6)],
-    ]
-
-
-def make_fallback_ring(radius_km, n_points=48):
-    """Approximate circular ring as GeoJSON coords (lon, lat)."""
+def make_fallback_ring(radius_km, n_points=72):
+    """Approximate circular ring with slight organic noise."""
     ring = []
     for i in range(n_points):
         a = 2 * math.pi * i / n_points
-        # add a touch of organic noise so it doesn't look perfectly circular
-        wobble = 1.0 + 0.05 * math.sin(3 * a)
-        ring.append(list(offset(ANAM["lat"], ANAM["lon"], a, radius_km * wobble)))
+        wobble = 1.0 + 0.04 * math.sin(3 * a) + 0.025 * math.sin(7 * a + 1)
+        ring.append([round(c, 6) for c in offset(a, radius_km * wobble)])
     ring.append(ring[0])
-    return [[round(x, 6), round(y, 6)] for x, y in ring]
+    return ring
 
 
-def make_real_ring(rays_data, level):
+def make_ring_from_traced(points):
     """
-    Build a closed ring from per-ray contour crossings.
-    rays_data: dict {ray_idx: {angle_deg, crossings: {str(level): [lat, lon] or None}}}
-    Returns ring in GeoJSON order [lon, lat] or None if too few crossings.
+    points: list of [lat, lon] from fetcher (already ordered CCW from angle 0).
+    Returns GeoJSON ring [[lon, lat], ..., closed].
     """
-    pts = []
-    for ray_key in sorted(rays_data.keys(), key=int):
-        r   = rays_data[ray_key]
-        ll  = r["crossings"].get(str(level))
-        if ll is None:
-            continue
-        pts.append((r["angle_deg"], ll[0], ll[1]))     # (angle, lat, lon)
-    if len(pts) < 8:
-        return None
-    pts.sort(key=lambda p: p[0])
-    ring = [[round(lon, 6), round(lat, 6)] for _, lat, lon in pts]
+    ring = [[round(lon, 6), round(lat, 6)] for lat, lon in points]
     ring.append(ring[0])
     return ring
 
@@ -96,32 +60,36 @@ def make_real_ring(rays_data, level):
 def main():
     rays_path = "data/anam_rays.json"
     have_real = os.path.exists(rays_path)
-    rays_data = {}
+    contours  = {}
 
     if have_real:
         with open(rays_path, encoding="utf-8") as f:
             payload = json.load(f)
-        rays_data = payload.get("rays", {})
-        print(f"Loaded {len(rays_data)} rays from {rays_path}")
+        contours = payload.get("contours", {})
+        print(f"Loaded contours from {rays_path}: {list(contours.keys())} min")
     else:
         print("No anam_rays.json found - using FALLBACK circular contours.")
         print("Run fetch_anam_isochrones.py to replace with real transit data.\n")
 
     features = []
-    for meta in FEATURE_ORDER:
-        if meta["key"] == "background":
-            ring = make_background_ring(half_km=25)
+    # Order largest-first for the JS (rendering order doesn't matter with no fill,
+    # but keeps the data legible)
+    for level in sorted(LEVEL_TO_TOTAL.keys(), reverse=True):
+        traced = contours.get(str(level))
+        if traced and len(traced) >= 8:
+            ring = make_ring_from_traced(traced)
+            source = "tmap-traced"
         else:
-            level = int(meta["key"])
-            ring = None
-            if have_real:
-                ring = make_real_ring(rays_data, level)
-            if ring is None:
-                ring = make_fallback_ring(FALLBACK_RADII_KM[level])
+            ring = make_fallback_ring(FALLBACK_RADII_KM[level])
+            source = "fallback-circle"
 
         features.append({
             "type": "Feature",
-            "properties": {"label": meta["label"], "source": meta["key"]},
+            "properties": {
+                "transit_min_from_anam": level,
+                "total_commute_min":     LEVEL_TO_TOTAL[level],
+                "source":                source,
+            },
             "geometry": {"type": "Polygon", "coordinates": [ring]},
         })
 
@@ -131,7 +99,11 @@ def main():
         json.dump({"type": "FeatureCollection", "features": features}, f)
 
     print(f"Wrote {out_path} with {len(features)} features.")
-    print("  (Walking circles for the <=20-min zone are drawn by the JS at runtime.)")
+    for feat in features:
+        p = feat["properties"]
+        print(f"  total {p['total_commute_min']:>2} min  "
+              f"({p['transit_min_from_anam']} min transit + 10 walk)  "
+              f"[{p['source']}]")
 
 
 if __name__ == "__main__":

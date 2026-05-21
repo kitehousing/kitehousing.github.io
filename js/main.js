@@ -50,14 +50,13 @@ if (typeof naver === 'undefined' || !naver.maps) {
     medicine:    { name: 'College of Medicine (의과대학)',          lat: 37.5944, lon: 127.0365 }
   };
 
-  /* ── 5-level commute zones (rendered largest-first = bottom→top) ── */
-  const ISO_LEVELS = [
-    { label: '80+ min',   color: '#B71C1C', fillOpacity: 0.20, strokeOpacity: 0.0 },
-    { label: '60–80 min', color: '#EF6C00', fillOpacity: 0.30, strokeOpacity: 0.5 },
-    { label: '40–60 min', color: '#FDD835', fillOpacity: 0.34, strokeOpacity: 0.5 },
-    { label: '20–40 min', color: '#66BB6A', fillOpacity: 0.38, strokeOpacity: 0.5 },
-    { label: '≤ 20 min',  color: '#1B5E20', fillOpacity: 0.42, strokeOpacity: 0.6 }
-  ];
+  /* ── Contour stroke colours, keyed by total commute time in minutes ── */
+  const STROKE_BY_TOTAL_MIN = {
+    20: { color: '#1B5E20', weight: 3.0 },    // dark green   — walking 20 min
+    40: { color: '#43A047', weight: 2.5 },    // green        — 30 min transit + 10 walk
+    60: { color: '#F9A825', weight: 2.5 },    // amber        — 50 min transit + 10 walk
+    80: { color: '#D32F2F', weight: 2.5 },    // red          — 70 min transit + 10 walk
+  };
 
   /* ── Helper: convert GeoJSON ring [[lon,lat], …] → Naver LatLng array ── */
   function geoToPath(ring) {
@@ -71,94 +70,49 @@ if (typeof naver === 'undefined' || !naver.maps) {
   }
   naver.maps.Event.addListener(map, 'click', closeInfo);
 
-  /* ── Commute zones: shared transit (anam) + per-building walking circle ── */
-  let transitPolygons = [];
-  let walkingPolygon  = null;
-  let buildingMarker  = null;
-  let cachedTransit   = null;     // GeoJSON cache so we don't refetch
-
-  function clearCommute() {
-    transitPolygons.forEach(p => p.setMap(null));
-    transitPolygons = [];
-    if (walkingPolygon) { walkingPolygon.setMap(null); walkingPolygon = null; }
-    if (buildingMarker) { buildingMarker.setMap(null); buildingMarker = null; }
-  }
-
-  function renderTransit(features) {
-    /* features ordered largest → smallest (background, 70, 50, 30 min) */
-    features.forEach((feat, i) => {
-      const cfg = ISO_LEVELS[i];
-      const path = geoToPath(feat.geometry.coordinates[0]);
-      const poly = new naver.maps.Polygon({
-        map,
-        paths: [path],
-        strokeWeight: cfg.strokeOpacity > 0 ? 1.5 : 0,
-        strokeColor: cfg.color,
-        strokeOpacity: cfg.strokeOpacity,
-        strokeStyle: 'shortdash',
-        fillColor: cfg.color,
-        fillOpacity: cfg.fillOpacity,
-        zIndex: 10 + i
-      });
-      transitPolygons.push(poly);
-    });
-  }
-
-  function renderWalkingCircle(building) {
-    /* ≤20 min walking circle: ~1500 m radius. Uses ISO_LEVELS[4] (dark green) */
-    const cfg = ISO_LEVELS[4];
-    walkingPolygon = new naver.maps.Circle({
+  /* ── Render contour rings (stroke only, no fill) ── */
+  function renderContour(feat) {
+    const total = feat.properties.total_commute_min;
+    const cfg   = STROKE_BY_TOTAL_MIN[total];
+    if (!cfg) return;
+    const path = geoToPath(feat.geometry.coordinates[0]);
+    new naver.maps.Polygon({
       map,
-      center: new naver.maps.LatLng(building.lat, building.lon),
-      radius: 1500,
-      strokeWeight: 1.5,
-      strokeColor: cfg.color,
-      strokeOpacity: cfg.strokeOpacity,
-      strokeStyle: 'shortdash',
-      fillColor: cfg.color,
-      fillOpacity: cfg.fillOpacity,
-      zIndex: 20
+      paths: [path],
+      strokeWeight:  cfg.weight,
+      strokeColor:   cfg.color,
+      strokeOpacity: 0.95,
+      strokeStyle:   'solid',
+      fillOpacity:   0,
+      clickable:     false,
+      zIndex:        10 + (80 - total)   /* draw smaller (shorter) contours on top */
     });
   }
 
-  async function loadCommute(buildingId) {
-    clearCommute();
+  /* Load all contours once (fixed — never changes per college selection) */
+  Promise.all([
+    fetch('data/isochrones/walking_20min.geojson').then(r => r.json()).catch(() => null),
+    fetch('data/isochrones/transit_anam.geojson').then(r => r.json()).catch(() => null)
+  ]).then(([walking, transit]) => {
+    if (walking) walking.features.forEach(renderContour);
+    if (transit) transit.features.forEach(renderContour);
+  });
+
+  /* ── College dropdown: ONLY moves a simple pin, contours stay fixed ── */
+  let buildingPin = null;
+  function setPin(buildingId) {
+    if (buildingPin) { buildingPin.setMap(null); buildingPin = null; }
     if (!buildingId) return;
-
     const b = buildingData[buildingId];
-
-    /* Building label — wrapper div uses CSS transform so the marker self-centers
-       on (lat, lon) without needing precise anchor pixel math */
-    buildingMarker = new naver.maps.Marker({
+    buildingPin = new naver.maps.Marker({
       map,
       position: new naver.maps.LatLng(b.lat, b.lon),
-      icon: {
-        content:
-          `<div style="position:relative;transform:translate(-50%,-50%);background:#8B1A2B;color:#fff;` +
-          `padding:4px 10px;border-radius:5px;font:700 11px/1.5 sans-serif;white-space:nowrap;` +
-          `box-shadow:0 2px 8px rgba(0,0,0,.35);">${b.name}</div>`,
-        anchor: new naver.maps.Point(0, 0)
-      },
-      zIndex: 200
+      title:    b.name,
+      zIndex:   200
     });
-
-    /* Load shared transit polygons (cache after first fetch) */
-    try {
-      if (!cachedTransit) {
-        const r = await fetch('data/isochrones/transit_anam.geojson');
-        if (!r.ok) throw new Error();
-        cachedTransit = await r.json();
-      }
-      renderTransit(cachedTransit.features);
-    } catch {
-      /* Transit data missing → skip silently, walking circle still renders */
-    }
-
-    /* Per-building walking circle */
-    renderWalkingCircle(b);
   }
 
   document.getElementById('building-select').addEventListener('change', e => {
-    loadCommute(e.target.value);
+    setPin(e.target.value);
   });
 }
