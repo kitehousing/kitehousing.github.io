@@ -193,10 +193,15 @@ def find_initial_radius_robust(client, target, lower=MIN_RADIUS_KM,
 
 
 def adaptive_step(client, angle_rad, target, guess_km,
-                  lower=MIN_RADIUS_KM, upper=MAX_RADIUS_KM):
+                  lower=MIN_RADIUS_KM, upper=MAX_RADIUS_KM,
+                  fallback_radius=None):
     """
     Find contour radius at `angle_rad`, warm-starting from `guess_km`.
-    Always returns a real number >= lower, never None.
+    Returns (radius_km, success):
+      success = True  if at least one query succeeded (radius is trustworthy)
+      success = False if every probe returned None (radius is a fallback guess)
+    `fallback_radius`: used as the result if all probes fail (e.g. weighted avg
+    of recent successful angles). Defaults to `guess_km`.
     """
     guess_km = max(lower, min(upper, guess_km))
 
@@ -209,10 +214,11 @@ def adaptive_step(client, angle_rad, target, guess_km,
                 guess_km = r
                 break
         if t is None:
-            return guess_km  # all probes failed → keep previous radius
+            result = fallback_radius if fallback_radius is not None else guess_km
+            return max(lower, min(upper, result)), False
 
     if abs(t - target) <= TOLERANCE_MIN:
-        return guess_km
+        return guess_km, True
 
     # Establish bracket
     if t > target:
@@ -227,7 +233,7 @@ def adaptive_step(client, angle_rad, target, guess_km,
             r_lo = max(lower, r_lo / EXPAND_FACTOR)
         else:
             if r_lo <= lower:
-                return max(lower, r_lo)
+                return max(lower, r_lo), True
     else:
         r_lo = guess_km
         r_hi = min(upper, guess_km * EXPAND_FACTOR)
@@ -240,7 +246,7 @@ def adaptive_step(client, angle_rad, target, guess_km,
             r_hi = min(upper, r_hi * EXPAND_FACTOR)
         else:
             if r_hi >= upper:
-                return min(upper, r_hi)
+                return min(upper, r_hi), True
 
     # Binary search inside bracket
     for _ in range(MAX_ITERATIONS):
@@ -249,13 +255,62 @@ def adaptive_step(client, angle_rad, target, guess_km,
         if t_mid is None:
             break
         if abs(t_mid - target) <= TOLERANCE_MIN:
-            return r_mid
+            return r_mid, True
         if t_mid > target:
             r_hi = r_mid
         else:
             r_lo = r_mid
 
-    return (r_lo + r_hi) / 2
+    return (r_lo + r_hi) / 2, True
+
+
+def smooth_failed_angles(radii, success_flags, inner_radii=None, inner_pad=1.02):
+    """
+    For each angle with success=False, replace its radius with a linear
+    interpolation between the nearest successful neighbours on either side
+    (going around the ring, wrap-around supported). Closer neighbour gets
+    more weight. Successful angles are untouched, preserving real features.
+    """
+    n = len(radii)
+    n_failed = sum(1 for s in success_flags if not s)
+    if n_failed == 0:
+        return list(radii), 0
+    if all(not s for s in success_flags):
+        return list(radii), 0   # nothing to interpolate from
+
+    result = list(radii)
+    for i in range(n):
+        if success_flags[i]:
+            continue
+        # Find nearest successful neighbours on each side, with wrap-around
+        ccw_idx = ccw_dist = None
+        cw_idx  = cw_dist  = None
+        for k in range(1, n):
+            if ccw_idx is None:
+                cand = (i + k) % n
+                if success_flags[cand]:
+                    ccw_idx, ccw_dist = cand, k
+            if cw_idx is None:
+                cand = (i - k) % n
+                if success_flags[cand]:
+                    cw_idx, cw_dist = cand, k
+            if ccw_idx is not None and cw_idx is not None:
+                break
+
+        if ccw_idx is not None and cw_idx is not None:
+            total = ccw_dist + cw_dist
+            value = (cw_dist  * radii[ccw_idx]
+                   + ccw_dist * radii[cw_idx]) / total   # closer = heavier
+        elif ccw_idx is not None:
+            value = radii[ccw_idx]
+        else:
+            value = radii[cw_idx]
+
+        if inner_radii is not None:
+            value = max(value, inner_radii[i] * inner_pad)
+        result[i] = value
+
+    return result, n_failed
 
 
 def trace_contour(client, target_min, num_steps,
@@ -264,30 +319,25 @@ def trace_contour(client, target_min, num_steps,
     """
     Trace one contour by CCW rotation.
 
-    inner_radii    : optional list (len = num_steps). Used as STRICT LOWER BOUNDS
-                     per angle. The contour we're tracing must be strictly outside
+    inner_radii    : optional list (len = num_steps). Strict LOWER BOUNDS per
+                     angle. The contour being traced must be strictly outside
                      the inner contour at every angle.
     scale_hint     : initial-guess scaling: r_target ≈ r_inner × scale_hint.
-    existing_radii : if resuming mid-contour, the already-computed radii (we
-                     start from len(existing_radii) and append).
+    existing_radii : if resuming mid-contour, the already-computed radii.
 
-    Returns list of radii (length = num_steps).
+    Returns (radii, n_smoothed) — radii always has length num_steps.
     """
     radii = list(existing_radii) if existing_radii else []
+    success_flags = [True] * len(radii)   # assume resumed values are good
 
     start_step = len(radii)
     if start_step >= num_steps:
-        return radii  # already done
+        return radii, 0
 
-    # Inner-contour lower bound at angle 0 (with small safety pad)
-    inner_pad = 1.02
-    lower_at = (lambda step: max(MIN_RADIUS_KM, inner_radii[step] * inner_pad)
-                if inner_radii else lambda step: MIN_RADIUS_KM)
-    # That ^ uses default-arg trick to capture inner_radii. Cleaner inline:
     def lower_at(step):
         if inner_radii is None:
             return MIN_RADIUS_KM
-        return max(MIN_RADIUS_KM, inner_radii[step] * inner_pad)
+        return max(MIN_RADIUS_KM, inner_radii[step] * 1.02)
 
     # Establish current radius (warm-start anchor)
     if radii:
@@ -295,15 +345,10 @@ def trace_contour(client, target_min, num_steps,
     elif inner_radii is not None:
         fallback = inner_radii[0] * scale_hint
         _, current_radius = find_initial_radius_robust(
-            client, target_min,
-            lower=lower_at(0),
-            fallback=fallback
-        )
+            client, target_min, lower=lower_at(0), fallback=fallback)
     else:
         _, current_radius = find_initial_radius_robust(
-            client, target_min,
-            fallback=5.0
-        )
+            client, target_min, fallback=5.0)
 
     step_delta = 2 * math.pi / num_steps
 
@@ -311,24 +356,48 @@ def trace_contour(client, target_min, num_steps,
         angle = step * step_delta
         lower = lower_at(step)
 
-        # Blend warm-start: prev-angle radius + inner-contour-scaled estimate
-        guess = current_radius
+        # Warm-start guess: blend previous radius with inner-scaled estimate
+        guess = max(current_radius, lower)
         if inner_radii is not None:
             inner_guess = inner_radii[step] * scale_hint
-            guess = (current_radius + inner_guess) / 2
-        guess = max(guess, lower)
+            guess = max((current_radius + inner_guess) / 2, lower)
 
-        new_radius = adaptive_step(client, angle, target_min, guess,
-                                    lower=lower, upper=MAX_RADIUS_KM)
+        # Fallback estimate: weighted avg of last 5 SUCCESSFUL radii.
+        # Used by adaptive_step if every probe at this angle fails.
+        recent = [(r, w) for w, (r, ok) in enumerate(
+                    zip(radii[-7:], success_flags[-7:]), start=1) if ok]
+        if recent:
+            num   = sum(w * r for r, w in recent)
+            denom = sum(w     for r, w in recent)
+            fallback_estimate = num / denom
+        else:
+            fallback_estimate = current_radius
+
+        new_radius, success = adaptive_step(
+            client, angle, target_min, guess,
+            lower=lower, upper=MAX_RADIUS_KM,
+            fallback_radius=fallback_estimate
+        )
         radii.append(new_radius)
-        current_radius = new_radius
+        success_flags.append(success)
+
+        # Update warm-start anchor only on successful steps to avoid drift
+        if success:
+            current_radius = new_radius
 
         if (step + 1) % 12 == 0 or step == num_steps - 1:
+            tag = "" if success else " [fallback]"
             print(f"  step {step + 1:>3}/{num_steps}  "
-                  f"r={new_radius:5.2f}km  "
+                  f"r={new_radius:5.2f}km{tag}  "
                   f"api={client.api_calls}  cache_hits={client.cache_hits}")
 
-    return radii
+    # Post-processing: bilateral interpolation for failed angles
+    radii, n_smoothed = smooth_failed_angles(
+        radii, success_flags, inner_radii=inner_radii)
+    if n_smoothed:
+        print(f"  smoothed {n_smoothed} failed angle(s) via neighbour interpolation")
+
+    return radii, n_smoothed
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -408,7 +477,7 @@ def main():
                 existing_radii.append(math.hypot(dlat, dlon) / 1000.0)
             print(f"  resuming from step {len(existing_radii)}/{args.steps}")
 
-        radii = trace_contour(
+        radii, _ = trace_contour(
             client, level, args.steps,
             inner_radii=prev_radii,
             existing_radii=existing_radii,
