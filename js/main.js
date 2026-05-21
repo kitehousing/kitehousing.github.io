@@ -89,14 +89,14 @@ if (typeof naver === 'undefined' || !naver.maps) {
     });
   }
 
-  /* Load all contours once (fixed — never changes per college selection) */
-  Promise.all([
-    fetch('data/isochrones/walking_20min.geojson').then(r => r.json()).catch(() => null),
-    fetch('data/isochrones/transit_anam.geojson').then(r => r.json()).catch(() => null)
-  ]).then(([walking, transit]) => {
-    if (walking) walking.features.forEach(renderContour);
-    if (transit) transit.features.forEach(renderContour);
-  });
+  /* Load all contours once (fixed — never changes per college selection).
+     transit_anam.geojson now contains all four total-commute levels
+     (20 / 40 / 60 / 80) — the 20-min ring is either the algorithm output
+     (Tmap pedestrian) or a user-provided fallback. */
+  fetch('data/isochrones/transit_anam.geojson')
+    .then(r => r.json())
+    .then(data => data.features.forEach(renderContour))
+    .catch(() => {});
 
   /* ── College dropdown: ONLY moves a simple pin, contours stay fixed ── */
   let buildingPin = null;
