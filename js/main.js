@@ -71,79 +71,6 @@ if (typeof naver === 'undefined' || !naver.maps) {
   }
   naver.maps.Event.addListener(map, 'click', closeInfo);
 
-  /* ── Static labels (gate + subway stations) ── */
-  function makeLabel(html, lat, lon, yAnchor = 1) {
-    new naver.maps.Marker({
-      map,
-      position: new naver.maps.LatLng(lat, lon),
-      icon: {
-        content: html,
-        anchor: new naver.maps.Point(html.length * 2, yAnchor * 14)
-      }
-    });
-  }
-
-  makeLabel(
-    '<div style="background:#8B1A2B;color:#fff;padding:3px 8px;border-radius:4px;font:700 11px/1.5 sans-serif;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3);">KU Main Gate</div>',
-    37.5877, 127.0296
-  );
-  makeLabel(
-    '<div style="background:#fff;border:2px solid #1a56a4;color:#1a56a4;padding:2px 6px;border-radius:4px;font:700 10px/1.4 sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2);">🚇 안암역 · Line 6</div>',
-    37.5862, 127.0301
-  );
-  makeLabel(
-    '<div style="background:#fff;border:2px solid #1a56a4;color:#1a56a4;padding:2px 6px;border-radius:4px;font:700 10px/1.4 sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2);">🚇 고려대역 · Line 6</div>',
-    37.5900, 127.0259
-  );
-
-  /* ── Neighborhood rent overlay ── */
-  function rentColor(mid) {
-    if (mid <= 45) return '#43a047';
-    if (mid <= 60) return '#fbc02d';
-    if (mid <= 80) return '#ef6c00';
-    return '#c62828';
-  }
-
-  fetch('data/neighborhoods.geojson')
-    .then(r => r.json())
-    .then(({ features }) => {
-      features.forEach(feat => {
-        const p   = feat.properties;
-        const path = geoToPath(feat.geometry.coordinates[0]);
-        const poly = new naver.maps.Polygon({
-          map,
-          paths: [path],
-          strokeWeight: 1.2,
-          strokeColor: '#666',
-          strokeOpacity: 0.6,
-          fillColor: rentColor(p.monthly_mid),
-          fillOpacity: 0.18,
-          zIndex: 100
-        });
-
-        naver.maps.Event.addListener(poly, 'click', e => {
-          closeInfo();
-          const content = `
-            <div style="font:400 13px/1.6 'Noto Sans KR',sans-serif;background:#fff;border:1.5px solid #ddd;border-radius:8px;padding:12px 14px;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,.15);">
-              <div style="font-weight:700;font-size:14px;">${p.name_en}</div>
-              <div style="color:#888;font-size:11px;margin-bottom:8px;">${p.name_kr}</div>
-              <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #eee;"><span style="color:#888;">Avg. Deposit</span><strong>${p.deposit}</strong></div>
-              <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #eee;"><span style="color:#888;">Monthly Rent</span><strong>${p.monthly}</strong></div>
-              <div style="font-size:11px;color:#555;margin-top:8px;">${p.notes}</div>
-            </div>`;
-          activeInfo = new naver.maps.InfoWindow({
-            content,
-            borderWidth: 0,
-            backgroundColor: 'transparent',
-            disableAnchor: true,
-            pixelOffset: new naver.maps.Point(0, -10)
-          });
-          activeInfo.open(map, e.coord);
-        });
-      });
-    })
-    .catch(() => {});
-
   /* ── Commute zones: shared transit (anam) + per-building walking circle ── */
   let transitPolygons = [];
   let walkingPolygon  = null;
@@ -200,13 +127,17 @@ if (typeof naver === 'undefined' || !naver.maps) {
 
     const b = buildingData[buildingId];
 
-    /* Building label */
+    /* Building label — wrapper div uses CSS transform so the marker self-centers
+       on (lat, lon) without needing precise anchor pixel math */
     buildingMarker = new naver.maps.Marker({
       map,
       position: new naver.maps.LatLng(b.lat, b.lon),
       icon: {
-        content: `<div style="background:#8B1A2B;color:#fff;padding:4px 10px;border-radius:5px;font:700 11px/1.5 sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.35);">${b.name}</div>`,
-        anchor: new naver.maps.Point(b.name.length * 3, 14)
+        content:
+          `<div style="position:relative;transform:translate(-50%,-50%);background:#8B1A2B;color:#fff;` +
+          `padding:4px 10px;border-radius:5px;font:700 11px/1.5 sans-serif;white-space:nowrap;` +
+          `box-shadow:0 2px 8px rgba(0,0,0,.35);">${b.name}</div>`,
+        anchor: new naver.maps.Point(0, 0)
       },
       zIndex: 200
     });
