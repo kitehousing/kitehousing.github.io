@@ -52,10 +52,9 @@ if (typeof naver === 'undefined' || !naver.maps) {
 
   /* ── Contour stroke colours, keyed by total commute time in minutes ── */
   const STROKE_BY_TOTAL_MIN = {
-    20: { color: '#1B5E20', weight: 3.0 },    // dark green   — walking 20 min
-    40: { color: '#43A047', weight: 2.5 },    // green        — 30 min transit + 10 walk
-    60: { color: '#F9A825', weight: 2.5 },    // amber        — 50 min transit + 10 walk
-    80: { color: '#D32F2F', weight: 2.5 },    // red          — 70 min transit + 10 walk
+    20: { color: '#1B5E20', weight: 3.0 },    // dark green — walking 20 min (manual)
+    40: { color: '#F9A825', weight: 2.5 },    // amber      — 30 min transit + 10 walk
+    60: { color: '#D32F2F', weight: 2.5 },    // red        — 50 min transit + 10 walk
   };
 
   /* ── Helper: convert GeoJSON ring [[lon,lat], …] → Naver LatLng array ── */
@@ -85,7 +84,7 @@ if (typeof naver === 'undefined' || !naver.maps) {
       strokeStyle:   'solid',
       fillOpacity:   0,
       clickable:     false,
-      zIndex:        10 + (80 - total)   /* draw smaller (shorter) contours on top */
+      zIndex:        10 + (60 - total)   /* draw smaller (shorter) contours on top */
     });
   }
 
