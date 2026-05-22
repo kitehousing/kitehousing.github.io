@@ -37,6 +37,7 @@ Usage:
 import argparse, json, math, os
 import numpy as np
 from scipy.interpolate import griddata
+from scipy.ndimage    import gaussian_filter
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -61,6 +62,57 @@ LEVEL_SPECS = [
 def banner(t):
     bar = "═" * 64
     print(f"\n{bar}\n  {t}\n{bar}")
+
+
+# ── Smoothing helpers ────────────────────────────────────────────────────────
+
+def smooth_grid_nanaware(grid, sigma):
+    """
+    Gaussian-smooth a 2D array while respecting NaN cells (outside the
+    sample convex hull). Standard gaussian_filter would propagate NaN
+    across the whole image; instead we smooth (data * valid_mask) and
+    (valid_mask) separately, then divide. This averages only over the
+    valid neighbourhood at each pixel, leaving truly-empty regions NaN.
+    """
+    if sigma <= 0:
+        return grid
+    mask = np.isnan(grid)
+    if not mask.any():
+        return gaussian_filter(grid, sigma=sigma)
+    data_zero = np.where(mask, 0.0, grid)
+    valid     = (~mask).astype(float)
+    sm_data   = gaussian_filter(data_zero, sigma=sigma)
+    sm_valid  = gaussian_filter(valid,    sigma=sigma)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        # Require ≥10% valid coverage in the local kernel to emit a value;
+        # otherwise treat as still-missing.
+        result = np.where(sm_valid > 0.1, sm_data / sm_valid, np.nan)
+    return result
+
+
+def chaikin_smooth(ring, iterations):
+    """
+    Chaikin's corner-cutting algorithm on a CLOSED polygon ring (last vertex
+    equals first). Each iteration replaces every corner P_i with two points
+    Q = 0.75·P_i + 0.25·P_{i+1} and R = 0.25·P_i + 0.75·P_{i+1}. The result
+    after k iterations approximates a uniform quadratic B-spline — C¹
+    continuous after one pass, visually smooth after two.
+    """
+    if iterations <= 0 or len(ring) < 4:
+        return ring
+    # Drop the duplicate closing vertex while operating on the ring
+    pts = ring[:-1] if ring[0] == ring[-1] else list(ring)
+    for _ in range(iterations):
+        n = len(pts)
+        new_pts = []
+        for i in range(n):
+            p, q = pts[i], pts[(i + 1) % n]
+            new_pts.append([0.75 * p[0] + 0.25 * q[0], 0.75 * p[1] + 0.25 * q[1]])
+            new_pts.append([0.25 * p[0] + 0.75 * q[0], 0.25 * p[1] + 0.75 * q[1]])
+        pts = new_pts
+    result = [[round(x, 6), round(y, 6)] for x, y in pts]
+    result.append(result[0])
+    return result
 
 
 # ── Sample loading & filtering ────────────────────────────────────────────────
@@ -161,6 +213,12 @@ def main():
                         help="Drop samples with implausible time-vs-distance ratios")
     parser.add_argument("--margin", type=float, default=0.015,
                         help="Lat/lon margin (degrees) around sample bbox")
+    parser.add_argument("--smooth-sigma", type=float, default=3.0,
+                        help="Gaussian sigma (in grid cells) for f(lon,lat) "
+                             "before contour extraction; 0 disables")
+    parser.add_argument("--chaikin-iters", type=int, default=2,
+                        help="Chaikin corner-cutting passes on the extracted "
+                             "polygon (0 = raw, 2 = smooth, 3 = very smooth)")
     args = parser.parse_args()
 
     banner("Grid-Based Contour Extractor  (origin: 안암역)")
@@ -195,6 +253,18 @@ def main():
     n_valid = int((~np.isnan(grid_time)).sum())
     print(f"  Valid grid cells: {n_valid}/{grid_time.size}")
 
+    # ── 3b. Smooth f(lon, lat) before contour extraction ──
+    if args.smooth_sigma > 0:
+        cell_lon_m = (lon_max - lon_min) * M_PER_DEG_LON / args.grid
+        cell_lat_m = (lat_max - lat_min) * M_PER_DEG_LAT / args.grid
+        approx_m   = (cell_lon_m + cell_lat_m) / 2 * args.smooth_sigma
+        print(f"\n  Smoothing f(lon,lat) with Gaussian σ={args.smooth_sigma} cells "
+              f"(~{approx_m:.0f} m)")
+        grid_time = smooth_grid_nanaware(grid_time, sigma=args.smooth_sigma)
+        n_valid_after = int((~np.isnan(grid_time)).sum())
+        if n_valid_after != n_valid:
+            print(f"  Valid cells after smoothing: {n_valid_after}/{grid_time.size}")
+
     # ── 4. Extract contours, combine with manual 20-min ──
     banner("Extracting contour polygons")
     features = []
@@ -219,17 +289,21 @@ def main():
         if ring is None:
             print(f"  {total:>2} min  :  ✗ no contour found at {transit} min")
             continue
+        raw_vertices = len(ring)
+        if args.chaikin_iters > 0:
+            ring = chaikin_smooth(ring, args.chaikin_iters)
         features.append({
             "type": "Feature",
             "properties": {
                 "total_commute_min": total,
                 "transit_min_from_anam": transit,
-                "source": f"grid-{args.method}",
+                "source": f"grid-{args.method}-σ{args.smooth_sigma}-chaikin{args.chaikin_iters}",
             },
             "geometry": {"type": "Polygon", "coordinates": [ring]},
         })
         print(f"  {total:>2} min  :  ✓ extracted ({transit}-min transit) "
-              f"— {len(ring)} vertices")
+              f"— {raw_vertices} → {len(ring)} vertices "
+              f"(Chaikin ×{args.chaikin_iters})")
 
     # ── 5. Save ──
     os.makedirs("data/isochrones", exist_ok=True)
