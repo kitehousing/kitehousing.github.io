@@ -42,12 +42,17 @@ if (typeof naver === 'undefined' || !naver.maps) {
 
   /* ── Campus buildings (used for the walking-circle inner zone) ── */
   const buildingData = {
-    engineering: { name: 'College of Engineering (공과대학)',     lat: 37.5893, lon: 127.0334 },
-    humanities:  { name: 'College of Liberal Arts (인문대학)',     lat: 37.5903, lon: 127.0287 },
-    business:    { name: 'Business School (경영대학)',             lat: 37.5877, lon: 127.0283 },
-    law:         { name: 'School of Law (법학전문대학원)',          lat: 37.5883, lon: 127.0272 },
-    education:   { name: 'College of Education (사범대학)',        lat: 37.5912, lon: 127.0268 },
-    medicine:    { name: 'College of Medicine (의과대학)',          lat: 37.5944, lon: 127.0365 }
+    engineering:         { name: 'College of Engineering (공과대학)',                        lat: 37.58357730400124,  lon: 127.02533218035535 },
+    liberal_arts:        { name: 'College of Liberal Arts (문과대학)',                        lat: 37.588690975580406, lon: 127.0316524428444  },
+    business:            { name: 'Business School (경영대학)',                                lat: 37.59054196975258,  lon: 127.03506810895817 },
+    life_sciences:       { name: 'College of Life Sciences & Biotechnology (생명과학대학)',   lat: 37.58557353604908,  lon: 127.02811925907832 },
+    political_economics: { name: 'College of Political Science and Economics (정경대학)',     lat: 37.58711697261103,  lon: 127.03045850127637 },
+    science:             { name: 'College of Science (이과대학)',                             lat: 37.58512085152415,  lon: 127.02537280665894 },
+    education:           { name: 'College of Education (사범대학)',                           lat: 37.591605138264015, lon: 127.03446292035005 },
+    international:       { name: 'College of International Studies (국제대학)',               lat: 37.588037211746524, lon: 127.03083755006668 },
+    informatics:         { name: 'College of Informatics (정보대학)',                         lat: 37.58513552869056,  lon: 127.02859388682612 },
+    media:               { name: 'College of Media & Communication (미디어대학)',             lat: 37.58674034554787,  lon: 127.03105298964363 },
+    health:              { name: 'College of Health Science (보건과학대학)',                  lat: 37.58571602611504,  lon: 127.02467085701744 }
   };
 
   /* ── Contour stroke colours, keyed by total commute time in minutes ── */
